@@ -2,36 +2,48 @@
 package p
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"html"
-	"io"
-	"log"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"os"
 )
 
-// HelloWorld prints the JSON encoded "message" field in the body
-// of the request or "Hello, World!" if there isn't one.
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
-	var d struct {
-		Message string `json:"message"`
-	}
+func GetWorkout(writer http.ResponseWriter, req *http.Request) {
+	queryParams := req.URL.Query()
+	id := queryParams.Get("_id")
 
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		switch err {
-		case io.EOF:
-			fmt.Fprint(w, "Hello World!")
-			return
-		default:
-			log.Printf("json.NewDecoder: %v", err)
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
+	uri := os.Getenv("DB_URL")
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := client.Disconnect(context.TODO()); err != nil {
+			panic(err)
 		}
-	}
+	}()
 
-	if d.Message == "" {
-		fmt.Fprint(w, "Hello World!")
+	coll := client.Database("workouts").Collection("workouts")
+	var workout Workout
+	err = coll.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&workout)
+	if err != nil {
 		return
 	}
-	fmt.Fprint(w, html.EscapeString(d.Message))
+	if err == mongo.ErrNoDocuments {
+		fmt.Printf("No document was found with the title %s\n", "title")
+		return
+	}
+	if err != nil {
+		panic(err)
+	}
+	jsonData, err := json.MarshalIndent(workout, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprint(writer, string(jsonData))
 }
