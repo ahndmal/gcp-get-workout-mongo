@@ -21,7 +21,6 @@ func main() {
 			panic(err)
 		}
 	}()
-
 	coll := client.Database("workouts").Collection("workouts")
 	var workout bson.M
 	err = coll.FindOne(context.TODO(), bson.D{{"workout_type", "BACK"}}).Decode(&workout)
