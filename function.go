@@ -16,21 +16,12 @@ import (
 
 func GetWorkout(writer http.ResponseWriter, req *http.Request) {
 	queryParams := req.URL.Query()
-	//var id string
-	//var record int
 	id := queryParams.Get("_id")
 	log.Printf("ID is %s", id)
-	//} else {
-	//	id = "6331d8f63212da02bf3419a6"
-	//	log.Printf("ID is %s", id)
-	//}
-	//if queryParams.Has("record") {
+	date := queryParams.Get("wDate")
+	log.Printf("wDate is %s", date)
 	record, _ := strconv.Atoi(queryParams.Get("record"))
-	log.Printf("record is %d", record)
-	//} else {
-	//	record = 76
-	//	log.Printf("record is %d", record)
-	//}
+	log.Printf("record query is %d", record)
 
 	uri := os.Getenv("DB_URL")
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
@@ -43,22 +34,45 @@ func GetWorkout(writer http.ResponseWriter, req *http.Request) {
 		}
 	}()
 
+	// client, collection
 	coll := client.Database("workouts").Collection("workouts")
 	var workout Workout
-	err = coll.FindOne(context.TODO(), bson.D{{"record", record}}).Decode(&workout)
-	if err != nil {
-		log.Panicln(err)
-	}
-	log.Println(workout)
-	if err == mongo.ErrNoDocuments {
-		fmt.Printf("No document was found with the id %s\n", id)
-		log.Panicln(err)
-	}
 
-	jsonData, err2 := json.MarshalIndent(workout, "", "    ")
-	if err2 != nil {
-		log.Panicln(err)
-	}
+	// by date
+	if len(date) > 0 || date != "" {
+		err = coll.FindOne(context.TODO(), bson.D{{"workout_date", date}}).Decode(&workout)
+		if err != nil {
+			log.Panicln(err)
+		}
+		log.Println(workout)
+		if err == mongo.ErrNoDocuments {
+			fmt.Printf("No document was found with the date %s\n", date)
+			log.Panicln(err)
+		}
 
-	fmt.Fprint(writer, string(jsonData))
+		jsonData, err2 := json.MarshalIndent(workout, "", "    ")
+		if err2 != nil {
+			log.Panicln(err)
+		}
+
+		fmt.Fprint(writer, string(jsonData))
+	}
+	// by Record
+	if record > 0 || record != 0 {
+		err = coll.FindOne(context.TODO(), bson.D{{"record", record}}).Decode(&workout)
+		if err != nil {
+			log.Panicln(err)
+		}
+		log.Println(workout)
+		if err == mongo.ErrNoDocuments {
+			fmt.Printf("No document was found with the id %d\n", record)
+			log.Panicln(err)
+		}
+
+		jsonData, err2 := json.MarshalIndent(workout, "", "    ")
+		if err2 != nil {
+			log.Panicln(err)
+		}
+		fmt.Fprint(writer, string(jsonData))
+	}
 }
