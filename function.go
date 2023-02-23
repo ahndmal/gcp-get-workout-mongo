@@ -18,8 +18,10 @@ func GetWorkout(writer http.ResponseWriter, req *http.Request) {
 	queryParams := req.URL.Query()
 	id := queryParams.Get("_id")
 	log.Printf("ID is %s", id)
+
 	date := queryParams.Get("wDate")
 	log.Printf("wDate is %s", date)
+
 	record, _ := strconv.Atoi(queryParams.Get("record"))
 	log.Printf("record query is %d", record)
 
