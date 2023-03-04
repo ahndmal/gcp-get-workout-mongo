@@ -1,3 +1,7 @@
+## Workouts Android App (https://github.com/AndriiMaliuta/workout-sless-mongo-expo)
+
+Function to get Workout from MongoDB in GCP.
+
 
 Deploy
 ```
