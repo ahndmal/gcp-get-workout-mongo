@@ -63,11 +63,11 @@ func GetWorkout(writer http.ResponseWriter, req *http.Request) {
 	if record > 0 || record != 0 {
 		err = coll.FindOne(context.TODO(), bson.D{{"record", record}}).Decode(&workout)
 		if err != nil {
-			log.Panicln(err)
+			log.Panicf("Error when getting Workout data from MongoDB. Error: %s", err)
 		}
 		log.Println(workout)
 		if err == mongo.ErrNoDocuments {
-			fmt.Printf("No document was found with the id %d\n", record)
+			fmt.Printf("No document was found with the record = %d\n", record)
 			log.Panicln(err)
 		}
 
